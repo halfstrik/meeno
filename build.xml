@@ -15,11 +15,6 @@
         <include name="*.jar"/>
     </patternset>
 
-    <patternset id="compiler.resources">
-        <exclude name="**/?*.java"/>
-        <exclude name="**/?*.class"/>
-    </patternset>
-
     <path id="library.runtime-lib.classpath">
         <fileset dir="${basedir}/lib">
             <patternset refid="library.patterns"/>
@@ -40,7 +35,7 @@
     <property name="test.output.dir" value="${basedir}/out/test"/>
 
     <path id="compile.sources.classpath">
-    <path refid="library.runtime-lib.classpath"/>
+        <path refid="library.runtime-lib.classpath"/>
     </path>
 
     <path id="compile.tests.classpath">
@@ -51,7 +46,7 @@
 
     <path id="source.path">
         <dirset dir="${basedir}">
-        <include name="src"/>
+            <include name="src"/>
         </dirset>
     </path>
 
@@ -63,13 +58,6 @@
             <classpath refid="compile.sources.classpath"/>
             <src refid="source.path"/>
         </javac>
-
-        <copy todir="${output.dir}">
-            <fileset dir="${basedir}/src">
-            <patternset refid="compiler.resources"/>
-                <type type="file"/>
-            </fileset>
-        </copy>
     </target>
 
     <path id="test.source.path">
@@ -86,13 +74,6 @@
             <classpath refid="compile.tests.classpath"/>
             <src refid="test.source.path"/>
         </javac>
-
-        <copy todir="${test.output.dir}">
-            <fileset dir="${basedir}/test">
-            <patternset refid="compiler.resources"/>
-                <type type="file"/>
-            </fileset>
-        </copy>
     </target>
 
     <target name="clean">
@@ -101,7 +82,7 @@
     </target>
 
     <target name="jar" depends="clean, compile.sources, compile.tests">
-        <jar destfile="out/meeno.jar">
+        <jar destfile="out/${ant.project.name}.jar">
             <fileset dir="${output.dir}"/>
             <fileset dir="${basedir}/src"/>
         </jar>
