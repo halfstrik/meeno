@@ -8,7 +8,7 @@
 
     <property name="compiler.debug" value="on"/>
     <property name="compiler.generate.no.warnings" value="off"/>
-    <property name="compiler.args" value="-parameters -encoding utf8"/>
+    <property name="compiler.args" value="-parameters -encoding UTF-8 -source 8"/>
     <property name="compiler.max.memory" value="700m"/>
 
     <patternset id="library.patterns">
@@ -21,26 +21,11 @@
         </fileset>
     </path>
 
-    <path id="library.test-lib.classpath">
-        <fileset dir="${basedir}/test-lib">
-            <patternset refid="library.patterns"/>
-        </fileset>
-    </path>
-
     <dirname property="basedir" file="${ant.file}"/>
 
-    <property name="compiler.args" value="-encoding UTF-8 -source 8 ${compiler.args}"/>
-
     <property name="output.dir" value="${basedir}/out/production"/>
-    <property name="test.output.dir" value="${basedir}/out/test"/>
 
     <path id="compile.sources.classpath">
-        <path refid="library.runtime-lib.classpath"/>
-    </path>
-
-    <path id="compile.tests.classpath">
-        <pathelement location="${output.dir}"/>
-        <path refid="library.test-lib.classpath"/>
         <path refid="library.runtime-lib.classpath"/>
     </path>
 
@@ -60,14 +45,29 @@
         </javac>
     </target>
 
+    <path id="library.test-lib.classpath">
+        <fileset dir="${basedir}/test-lib">
+            <patternset refid="library.patterns"/>
+        </fileset>
+    </path>
+
+    <property name="test.output.dir" value="${basedir}/out/test"/>
+
+    <path id="compile.tests.classpath">
+        <pathelement location="${output.dir}"/>
+        <pathelement location="${test.output.dir}"/>
+        <path refid="library.test-lib.classpath"/>
+        <path refid="library.runtime-lib.classpath"/>
+    </path>
+
     <path id="test.source.path">
         <dirset dir="${basedir}">
             <include name="test"/>
         </dirset>
     </path>
 
-    <target name="compile.tests" unless="skip.tests">
-        <mkdir dir="${test.output.dir}"/>
+    <target name="compile.tests" depends="compile.sources" unless="skip.tests">
+    <mkdir dir="${test.output.dir}"/>
         <javac destdir="${test.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
                memorymaximumsize="${compiler.max.memory}" fork="true" includeantruntime="false">
             <compilerarg line="${compiler.args}"/>
@@ -76,13 +76,34 @@
         </javac>
     </target>
 
+    <target name="run.tests" depends="compile.tests" unless="skip.tests">
+        <junit printsummary="no" fork="yes" haltonfailure="no" failureproperty="test.failed">
+            <classpath refid="compile.tests.classpath"/>
+            <formatter type="plain" usefile="false"/>
+            <batchtest todir="${test.output.dir}">
+                <fileset dir="${test.output.dir}">
+                    <include name="**/*Test.class"/>
+                    <exclude name="live/**"/>
+                    <exclude name="snowmonkey/meeno/HttpExchangeOperationsTest*"/>
+                    <exclude name="snowmonkey/meeno/JsonSerializationTest*"/>
+                    <exclude name="snowmonkey/meeno/ListEventTypesTest*"/>
+                    <exclude name="snowmonkey/meeno/SessionTokenTest*"/>
+                    <exclude name="snowmonkey/meeno/types/FootballMarketTest*"/>
+                    <exclude name="snowmonkey/meeno/types/ListMarketCatalogueTest*"/>
+                    <exclude name="snowmonkey/meeno/types/NavigationTest*"/>
+                </fileset>
+            </batchtest>
+        </junit>
+        <fail message="Test failure detected, check test results." if="test.failed"/>
+    </target>
+
     <target name="clean">
         <delete dir="${output.dir}"/>
         <delete dir="${test.output.dir}"/>
     </target>
 
-    <target name="jar" depends="clean, compile.sources, compile.tests">
-        <jar destfile="out/${ant.project.name}.jar">
+    <target name="jar" depends="clean, run.tests">
+    <jar destfile="out/${ant.project.name}.jar">
             <fileset dir="${output.dir}"/>
             <fileset dir="${basedir}/src"/>
         </jar>

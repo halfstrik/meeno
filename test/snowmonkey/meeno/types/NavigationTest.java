@@ -1,19 +1,17 @@
 package snowmonkey.meeno.types;
 
 import live.raw.GenerateTestData;
-import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.hamcrest.core.IsEqual.*;
-import static org.junit.Assert.*;
-import static snowmonkey.meeno.types.EventTypeName.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
+import static snowmonkey.meeno.types.EventTypeName.SOCCER;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class NavigationTest {
     @Test
@@ -68,8 +66,7 @@ public class NavigationTest {
 
     @Test
     public void testSiblings() throws Exception {
-//        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
-        Navigation navigation = Navigation.parse(FileUtils.readFileToString(Paths.get("/Users/nickpomfret/Documents/github/projects/betfair/cache/navigation/navigation.json").toFile()));
+        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
         Navigation.Markets markets = navigation.findMarkets(
                 SOCCER,
                 between(ZonedDateTime.now().minusDays(10), ZonedDateTime.now().plusDays(20)),
