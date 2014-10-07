@@ -1,29 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="meeno" default="jar">
 
-    <property file="meeno.properties"/>
     <!-- Uncomment the following property if no tests compilation is needed -->
     <!--
     <property name="skip.tests" value="true"/>
      -->
 
-    <!-- Compiler options -->
-
     <property name="compiler.debug" value="on"/>
     <property name="compiler.generate.no.warnings" value="off"/>
-    <property name="compiler.args" value="-parameters"/>
+    <property name="compiler.args" value="-parameters -encoding utf8"/>
     <property name="compiler.max.memory" value="700m"/>
 
     <patternset id="library.patterns">
         <include name="*.jar"/>
     </patternset>
+
     <patternset id="compiler.resources">
         <exclude name="**/?*.java"/>
         <exclude name="**/?*.class"/>
     </patternset>
-
-
-    <!-- Project Libraries -->
 
     <path id="library.runtime-lib.classpath">
         <fileset dir="${basedir}/lib">
@@ -37,116 +32,78 @@
         </fileset>
     </path>
 
-    <!-- Modules -->
+    <dirname property="basedir" file="${ant.file}"/>
 
+    <property name="compiler.args" value="-encoding UTF-8 -source 8 ${compiler.args}"/>
 
-    <!-- Module meeno -->
+    <property name="output.dir" value="${basedir}/out/production"/>
+    <property name="test.output.dir" value="${basedir}/out/test"/>
 
-    <dirname property="module.meeno.basedir" file="${ant.file}"/>
-
-
-    <property name="compiler.args.meeno" value="-encoding UTF-8 -source 8 ${compiler.args}"/>
-
-    <property name="meeno.output.dir" value="${module.meeno.basedir}/out/production/meeno"/>
-    <property name="meeno.testoutput.dir" value="${module.meeno.basedir}/out/test/meeno"/>
-
-    <path id="meeno.module.bootclasspath">
-        <!-- Paths to be included in compilation bootclasspath -->
+    <path id="compile.sources.classpath">
+    <path refid="library.runtime-lib.classpath"/>
     </path>
 
-    <path id="meeno.module.production.classpath">
+    <path id="compile.tests.classpath">
+        <pathelement location="${output.dir}"/>
         <path refid="library.test-lib.classpath"/>
         <path refid="library.runtime-lib.classpath"/>
     </path>
 
-    <path id="meeno.runtime.production.module.classpath">
-        <pathelement location="${meeno.output.dir}"/>
-        <path refid="library.test-lib.classpath"/>
-        <path refid="library.runtime-lib.classpath"/>
-    </path>
-
-    <path id="meeno.module.classpath">
-        <pathelement location="${meeno.output.dir}"/>
-        <path refid="library.test-lib.classpath"/>
-        <path refid="library.runtime-lib.classpath"/>
-    </path>
-
-    <path id="meeno.runtime.module.classpath">
-        <pathelement location="${meeno.testoutput.dir}"/>
-        <pathelement location="${meeno.output.dir}"/>
-        <path refid="library.test-lib.classpath"/>
-        <path refid="library.runtime-lib.classpath"/>
-    </path>
-
-    <path id="meeno.module.sourcepath">
-        <dirset dir="${module.meeno.basedir}">
-            <include name="src"/>
+    <path id="source.path">
+        <dirset dir="${basedir}">
+        <include name="src"/>
         </dirset>
     </path>
 
-    <path id="meeno.module.test.sourcepath">
-        <dirset dir="${module.meeno.basedir}">
+    <target name="compile.sources">
+        <mkdir dir="${output.dir}"/>
+        <javac destdir="${output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+               memorymaximumsize="${compiler.max.memory}" fork="true" includeantruntime="false">
+            <compilerarg line="${compiler.args}"/>
+            <classpath refid="compile.sources.classpath"/>
+            <src refid="source.path"/>
+        </javac>
+
+        <copy todir="${output.dir}">
+            <fileset dir="${basedir}/src">
+            <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <path id="test.source.path">
+        <dirset dir="${basedir}">
             <include name="test"/>
         </dirset>
     </path>
 
-
-    <target name="compile.module.meeno" depends="compile.module.meeno.production,compile.module.meeno.tests"
-            description="Compile module meeno"/>
-
-    <target name="compile.module.meeno.production" description="Compile module meeno; production classes">
-        <mkdir dir="${meeno.output.dir}"/>
-        <javac destdir="${meeno.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
-               memorymaximumsize="${compiler.max.memory}" fork="true">
-            <compilerarg line="${compiler.args.meeno}"/>
-            <bootclasspath refid="meeno.module.bootclasspath"/>
-            <classpath refid="meeno.module.production.classpath"/>
-            <src refid="meeno.module.sourcepath"/>
+    <target name="compile.tests" unless="skip.tests">
+        <mkdir dir="${test.output.dir}"/>
+        <javac destdir="${test.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+               memorymaximumsize="${compiler.max.memory}" fork="true" includeantruntime="false">
+            <compilerarg line="${compiler.args}"/>
+            <classpath refid="compile.tests.classpath"/>
+            <src refid="test.source.path"/>
         </javac>
 
-        <copy todir="${meeno.output.dir}">
-            <fileset dir="${module.meeno.basedir}/src">
-                <patternset refid="compiler.resources"/>
+        <copy todir="${test.output.dir}">
+            <fileset dir="${basedir}/test">
+            <patternset refid="compiler.resources"/>
                 <type type="file"/>
             </fileset>
         </copy>
     </target>
 
-    <target name="compile.module.meeno.tests" depends="compile.module.meeno.production"
-            description="compile module meeno; test classes" unless="skip.tests">
-        <mkdir dir="${meeno.testoutput.dir}"/>
-        <javac destdir="${meeno.testoutput.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
-               memorymaximumsize="${compiler.max.memory}" fork="true">
-            <compilerarg line="${compiler.args.meeno}"/>
-            <bootclasspath refid="meeno.module.bootclasspath"/>
-            <classpath refid="meeno.module.classpath"/>
-            <src refid="meeno.module.test.sourcepath"/>
-        </javac>
-
-        <copy todir="${meeno.testoutput.dir}">
-            <fileset dir="${module.meeno.basedir}/test">
-                <patternset refid="compiler.resources"/>
-                <type type="file"/>
-            </fileset>
-        </copy>
+    <target name="clean">
+        <delete dir="${output.dir}"/>
+        <delete dir="${test.output.dir}"/>
     </target>
 
-    <property name="build.dir" location="build"/>
-
-    <target name="clean.module.meeno" description="cleanup module">
-        <delete dir="${build.dir}" failonerror="true"/>
-        <delete dir="${meeno.output.dir}"/>
-        <delete dir="${meeno.testoutput.dir}"/>
-    </target>
-
-    <target name="clean" depends="clean.module.meeno" description="cleanup all"/>
-
-    <target name="build.modules" depends="clean, compile.module.meeno" description="build all modules"/>
-
-    <target name="jar" depends="clean, build.modules">
-    <jar destfile="out/meeno.jar">
-            <fileset dir="${meeno.output.dir}"/>
-            <fileset dir="${module.meeno.basedir}/src"/>
+    <target name="jar" depends="clean, compile.sources, compile.tests">
+        <jar destfile="out/meeno.jar">
+            <fileset dir="${output.dir}"/>
+            <fileset dir="${basedir}/src"/>
         </jar>
     </target>
 
