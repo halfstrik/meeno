@@ -3,7 +3,7 @@
 
     <property name="compiler.debug" value="on"/>
     <property name="compiler.generate.no.warnings" value="off"/>
-    <property name="compiler.args" value="-parameters -encoding UTF-8 -source 8"/>
+    <property name="compiler.args" value="-encoding UTF-8 -source 8 -parameters"/>
     <property name="compiler.max.memory" value="700m"/>
 
     <property name="out.dir" value="${basedir}/out"/>
@@ -15,6 +15,7 @@
     </target>
 
     <property name="lib.dir" value="${basedir}/lib"/>
+    <property name="lib.src.dir" value="${lib.dir}-src"/>
     <property name="test.lib.dir" value="${basedir}/test-lib"/>
 
     <target name="resolve">
@@ -22,6 +23,11 @@
                       pattern="${lib.dir}/[artifact]-[revision].[ext]"/>
         <ivy:retrieve type="jar,bundle" conf="test" sync="true"
                       pattern="${test.lib.dir}/[artifact]-[revision].[ext]"/>
+    </target>
+
+    <target name="resolve.sources">
+        <ivy:retrieve conf="sources" sync="true"
+                      pattern="${lib.src.dir}/[artifact]-[revision]-[type].[ext]"/>
     </target>
 
     <patternset id="library.patterns">
