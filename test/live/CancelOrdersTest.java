@@ -6,19 +6,13 @@ import snowmonkey.meeno.HttpExchangeOperations;
 import snowmonkey.meeno.requests.CancelInstruction;
 import snowmonkey.meeno.requests.CancelOrders;
 import snowmonkey.meeno.requests.ListCurrentOrders;
-import snowmonkey.meeno.types.BetId;
-import snowmonkey.meeno.types.CancelExecutionReport;
-import snowmonkey.meeno.types.CurrentOrderSummaryReport;
-import snowmonkey.meeno.types.CustomerRef;
-import snowmonkey.meeno.types.EventTypeName;
-import snowmonkey.meeno.types.Navigation;
-import snowmonkey.meeno.types.OrderProjection;
+import snowmonkey.meeno.types.*;
 
 import java.util.List;
 
-import static com.google.common.collect.Lists.*;
-import static java.time.ZonedDateTime.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.time.ZonedDateTime.now;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class CancelOrdersTest extends AbstractLiveTestCase {
     @Test
@@ -29,7 +23,7 @@ public class CancelOrdersTest extends AbstractLiveTestCase {
 
         List<CancelInstruction> instructions = newArrayList(new CancelInstruction(new BetId("1234"), 2.0));
 
-        CancelExecutionReport cancelExecutionReport = httpExchangeOperations.cancelOrders(new CancelOrders(aMarket.id, instructions, CustomerRef.unique()));
+        CancelExecutionReport cancelExecutionReport = httpExchangeOperations.cancelOrders(new CancelOrders(aMarket.id, instructions, CustomerRef.uniqueCustomerRef()));
 
         System.out.println("cancelExecutionReport = " + cancelExecutionReport);
     }

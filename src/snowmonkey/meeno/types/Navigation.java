@@ -9,19 +9,20 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 import snowmonkey.meeno.Exchange;
 import snowmonkey.meeno.JsonSerialization;
 import snowmonkey.meeno.NotFoundException;
+import snowmonkey.meeno.types.experimental.FootballMarket;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.google.common.collect.Lists.*;
+import static com.google.common.collect.Lists.newArrayList;
 
 public class Navigation {
     public final Navigation parent;
@@ -38,6 +39,33 @@ public class Navigation {
         this.children = children;
     }
 
+    public static Navigation parse(String json) {
+        JsonElement parsed = new JsonParser().parse(json);
+
+        JsonObject childObj = parsed.getAsJsonObject();
+
+        return makeRootNode(childObj);
+    }
+
+    private static Navigation makeRootNode(JsonObject childObj) {
+        return childNode(childObj, null);
+    }
+
+    @Nullable
+    private static Navigation childNode(JsonObject childObj, Navigation parentNode) {
+        Type type = Type.valueOf(childObj.get("type").getAsString().trim());
+        String id = childObj.get("id").getAsString().trim();
+        String name = childObj.get("name").getAsString().trim();
+
+        if (!type.equals(Type.MARKET)) {
+            JsonArray children = childObj.get("children").getAsJsonArray();
+
+            return new Navigation(parentNode, type, id, name, children);
+        }
+
+        return null;
+    }
+
     public EventTypeName eventTypeName() {
         if (this.type.equals(Type.EVENT_TYPE))
             return new EventTypeName(name);
@@ -47,14 +75,6 @@ public class Navigation {
     @Override
     public String toString() {
         return "[" + StringUtils.join(new String[]{id, name, type.name(), children.size() + " children"}, ",") + "]";
-    }
-
-    public static Navigation parse(String json) {
-        JsonElement parsed = new JsonParser().parse(json);
-
-        JsonObject childObj = parsed.getAsJsonObject();
-
-        return makeRootNode(childObj);
     }
 
     public List<Navigation> getEventTypes() {
@@ -70,7 +90,7 @@ public class Navigation {
             Navigation topLevelEvent = eventType(eventTypeName);
             return topLevelEvent.children();
         } catch (NotFoundException e) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
     }
 
@@ -119,33 +139,11 @@ public class Navigation {
         List<Navigation> results = new ArrayList<>();
         for (JsonElement child : children) {
             JsonObject asJsonObject = child.getAsJsonObject();
-            Navigation childNode = makeChildNode(asJsonObject, this);
+            Navigation childNode = childNode(asJsonObject, this);
             if (childNode != null)
                 results.add(childNode);
         }
         return results;
-    }
-
-    public String print(List<Navigation> eventTypes) {
-        return StringUtils.join(eventTypes.stream().map(nav -> nav.name).iterator(), ",");
-    }
-
-    private static Navigation makeRootNode(JsonObject childObj) {
-        return makeChildNode(childObj, null);
-    }
-
-    private static Navigation makeChildNode(JsonObject childObj, Navigation parent1) {
-        Type type = Type.valueOf(childObj.get("type").getAsString());
-        String id = childObj.get("id").getAsString();
-        String name = childObj.get("name").getAsString();
-
-        if (!type.equals(Type.MARKET)) {
-            JsonArray children = childObj.get("children").getAsJsonArray();
-
-            return new Navigation(parent1, type, id, name, children);
-        }
-
-        return null;
     }
 
     public List<Market> markets() {
@@ -235,6 +233,10 @@ public class Navigation {
         return StringUtils.join(Lists.reverse(names), " / ");
     }
 
+    public enum Type {
+        GROUP, EVENT_TYPE, EVENT, RACE, MARKET
+    }
+
     public static class Markets implements Iterable<Market> {
         public final ImmutableMap<MarketId, Market> markets;
 
@@ -248,9 +250,7 @@ public class Navigation {
 
         public Multimap<Exchange, Market> marketsByExchange() {
             Multimap<Exchange, Market> idsByExchange = ArrayListMultimap.create();
-            markets.values().stream().forEach(m -> {
-                idsByExchange.put(m.exchange(), m);
-            });
+            markets.values().stream().forEach(m -> idsByExchange.put(m.exchange(), m));
             return idsByExchange;
         }
 
@@ -273,10 +273,6 @@ public class Navigation {
 
             return markets.get(marketId);
         }
-    }
-
-    public enum Type {
-        GROUP, EVENT_TYPE, EVENT, RACE, MARKET
     }
 
     public static class Market extends ImmutbleType {

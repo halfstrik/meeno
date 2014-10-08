@@ -2,11 +2,12 @@ package snowmonkey.meeno.types;
 
 import live.raw.GenerateTestData;
 import org.junit.Test;
+import snowmonkey.meeno.types.experimental.FootballMarket;
 
 import java.time.ZonedDateTime;
 
-import static snowmonkey.meeno.types.EventTypeName.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static snowmonkey.meeno.types.EventTypeName.SOCCER;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class FootballMarketTest {
     @Test

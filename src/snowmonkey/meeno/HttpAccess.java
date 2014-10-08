@@ -1,5 +1,6 @@
 package snowmonkey.meeno;
 
+import com.google.gson.JsonIOException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -26,79 +27,27 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.message.BasicNameValuePair;
-import snowmonkey.meeno.requests.CancelOrders;
-import snowmonkey.meeno.requests.ListClearedOrders;
-import snowmonkey.meeno.requests.ListCompetitions;
-import snowmonkey.meeno.requests.ListCountries;
-import snowmonkey.meeno.requests.ListCurrentOrders;
-import snowmonkey.meeno.requests.ListEventTypes;
-import snowmonkey.meeno.requests.ListEvents;
-import snowmonkey.meeno.requests.ListMarketBook;
-import snowmonkey.meeno.requests.ListMarketCatalogue;
-import snowmonkey.meeno.requests.ListMarketTypes;
-import snowmonkey.meeno.requests.ListTimeRanges;
-import snowmonkey.meeno.requests.PlaceOrders;
-import snowmonkey.meeno.requests.TransferFunds;
-import snowmonkey.meeno.types.BetId;
-import snowmonkey.meeno.types.BetStatus;
-import snowmonkey.meeno.types.CustomerRef;
-import snowmonkey.meeno.types.MarketFilter;
-import snowmonkey.meeno.types.MarketId;
-import snowmonkey.meeno.types.MarketProjection;
-import snowmonkey.meeno.types.MarketSort;
-import snowmonkey.meeno.types.MatchProjection;
-import snowmonkey.meeno.types.OrderBy;
-import snowmonkey.meeno.types.OrderProjection;
-import snowmonkey.meeno.types.PlaceInstruction;
-import snowmonkey.meeno.types.PriceProjection;
-import snowmonkey.meeno.types.SessionToken;
-import snowmonkey.meeno.types.SortDir;
-import snowmonkey.meeno.types.TimeGranularity;
-import snowmonkey.meeno.types.TimeRange;
+import snowmonkey.meeno.requests.*;
+import snowmonkey.meeno.types.*;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import static snowmonkey.meeno.DefaultProcessor.*;
-import static snowmonkey.meeno.types.Locale.*;
-import static snowmonkey.meeno.types.MarketFilter.Builder.*;
+import static snowmonkey.meeno.DefaultProcessor.defaultProcessor;
+import static snowmonkey.meeno.types.Locale.EN_US;
+import static snowmonkey.meeno.types.MarketFilter.Builder.noFilter;
 
 public class HttpAccess {
 
-    public static interface Auditor {
-        default void auditPost(URI uri, String body, String response) {
-            System.out.println("[post " + uri + "]");
-            System.out.println("--> " + body);
-            System.out.println("<-- " + response);
-        }
-
-        default void auditGet(URI uri, String response) {
-            System.out.println("[get " + uri + "]");
-            System.out.println("<-- " + response);
-        }
-    }
-
     public static final String UTF_8 = "UTF-8";
     public static final String X_APPLICATION = "X-Application";
-
-    public interface Processor {
-        String process(StatusLine statusLine, InputStream in) throws IOException, ApiException;
-    }
-
     private final List<Auditor> auditors = new ArrayList<>();
     private final SessionToken sessionToken;
     private final AppKey appKey;
@@ -116,6 +65,92 @@ public class HttpAccess {
         this.exchange = exchange;
         this.conf = conf;
         this.httpClientBuilder = httpClientBuilder;
+    }
+
+    private static HttpPost httpPost(URI uri, RequestConfig requestConfig) {
+        HttpPost httpPost = new HttpPost(uri);
+        httpPost.setConfig(requestConfig);
+        return httpPost;
+    }
+
+    private static HttpGet httpGet(URI uri, RequestConfig requestConfig) {
+        HttpGet httpGet = new HttpGet(uri);
+        httpGet.setConfig(requestConfig);
+        return httpGet;
+    }
+
+    private static RequestConfig conf() {
+        RequestConfig defaultRequestConfig = RequestConfig.custom()
+                .setExpectContinueEnabled(true)
+                .setStaleConnectionCheckEnabled(true)
+                .build();
+
+        return RequestConfig.copy(defaultRequestConfig)
+                .setSocketTimeout(10 * 1000)
+                .setConnectTimeout(5000)
+                .setConnectionRequestTimeout(4000)
+                .build();
+    }
+
+    public static SessionToken login(MeenoConfig config) {
+        return login(
+                config.certificateFile(),
+                config.certificatePassword(),
+                config.username(),
+                config.password(),
+                config.appKey()
+        );
+    }
+
+    public static SessionToken login(File certFile, String certPassword, String betfairUsername, String betfairPassword, AppKey apiKey) {
+
+        try {
+            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                    .register("http", PlainConnectionSocketFactory.INSTANCE)
+                    .register("https", socketFactory(certFile, certPassword))
+                    .build();
+
+            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+
+            connManager.setDefaultSocketConfig(SocketConfig.custom().build());
+            connManager.setDefaultConnectionConfig(ConnectionConfig.custom().build());
+            try (CloseableHttpClient client = HttpClients.custom()
+                    .setConnectionManager(connManager)
+                    .disableRedirectHandling()
+                    .build()) {
+
+                HttpPost httpPost = new HttpPost(Exchange.LOGIN_URI);
+                List<NameValuePair> postFormData = new ArrayList<>();
+                postFormData.add(new BasicNameValuePair("username", betfairUsername));
+                postFormData.add(new BasicNameValuePair("password", betfairPassword));
+
+                httpPost.setEntity(new UrlEncodedFormEntity(postFormData));
+
+                httpPost.setHeader(X_APPLICATION, apiKey.asString());
+
+                HttpResponse response = client.execute(httpPost);
+                HttpEntity entity = response.getEntity();
+                try (InputStream content = entity.getContent()) {
+                    String json = DefaultProcessor.processResponse(response.getStatusLine(), content);
+                    return SessionToken.parseJson(json);
+                }
+            } finally {
+                connManager.close();
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException("Cannot log in", e);
+        }
+    }
+
+    private static SSLConnectionSocketFactory socketFactory(File certFile, String certPassword) throws Exception {
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        KeyStore keyStore = KeyStore.getInstance("pkcs12");
+        keyStore.load(new FileInputStream(certFile), certPassword.toCharArray());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(keyStore, certPassword.toCharArray());
+        KeyManager[] keyManagers = kmf.getKeyManagers();
+        ctx.init(keyManagers, null, new SecureRandom());
+        return new SSLConnectionSocketFactory(ctx, new StrictHostnameVerifier());
     }
 
     public void addAuditor(Auditor auditor) {
@@ -303,9 +338,9 @@ public class HttpAccess {
                 for (Auditor auditor : auditors) {
                     auditor.auditPost(uri, body, responseBody);
                 }
-            } catch (DefaultProcessor.HttpException | IOException | ApiException e) {
+            } catch (DefaultProcessor.HttpException | IOException | JsonIOException | ApiException e) {
                 for (Auditor auditor : auditors) {
-                    auditor.auditPost(uri, body, "");
+                    auditor.auditPostFailure(uri, body, e);
                 }
                 throw e;
             }
@@ -333,94 +368,8 @@ public class HttpAccess {
         abstractHttpMessage.setHeader("X-Authentication", sessionToken.asString());
     }
 
-    private static HttpPost httpPost(URI uri, RequestConfig requestConfig) {
-        HttpPost httpPost = new HttpPost(uri);
-        httpPost.setConfig(requestConfig);
-        return httpPost;
-    }
-
-    private static HttpGet httpGet(URI uri, RequestConfig requestConfig) {
-        HttpGet httpGet = new HttpGet(uri);
-        httpGet.setConfig(requestConfig);
-        return httpGet;
-    }
-
-    private static RequestConfig conf() {
-        RequestConfig defaultRequestConfig = RequestConfig.custom()
-                .setExpectContinueEnabled(true)
-                .setStaleConnectionCheckEnabled(true)
-                .build();
-
-        return RequestConfig.copy(defaultRequestConfig)
-                .setSocketTimeout(6000)
-                .setConnectTimeout(5000)
-                .setConnectionRequestTimeout(4000)
-                .build();
-    }
-
     public void logout() throws IOException, ApiException {
         sendPostRequest(defaultProcessor(), Exchange.LOGOUT_URI, JsonSerialization.gson().toJson(noFilter()));
-    }
-
-    public static SessionToken login(MeenoConfig config) {
-        return login(
-                config.certificateFile(),
-                config.certificatePassword(),
-                config.username(),
-                config.password(),
-                config.appKey()
-        );
-    }
-
-    public static SessionToken login(File certFile, String certPassword, String betfairUsername, String betfairPassword, AppKey apiKey) {
-
-        try {
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
-                    .register("http", PlainConnectionSocketFactory.INSTANCE)
-                    .register("https", socketFactory(certFile, certPassword))
-                    .build();
-
-            PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-
-            connManager.setDefaultSocketConfig(SocketConfig.custom().build());
-            connManager.setDefaultConnectionConfig(ConnectionConfig.custom().build());
-            try (CloseableHttpClient client = HttpClients.custom()
-                    .setConnectionManager(connManager)
-                    .disableRedirectHandling()
-                    .build()) {
-
-                HttpPost httpPost = new HttpPost(Exchange.LOGIN_URI);
-                List<NameValuePair> postFormData = new ArrayList<>();
-                postFormData.add(new BasicNameValuePair("username", betfairUsername));
-                postFormData.add(new BasicNameValuePair("password", betfairPassword));
-
-                httpPost.setEntity(new UrlEncodedFormEntity(postFormData));
-
-                httpPost.setHeader(X_APPLICATION, apiKey.asString());
-
-                HttpResponse response = client.execute(httpPost);
-                HttpEntity entity = response.getEntity();
-                try (InputStream content = entity.getContent()) {
-                    String json = DefaultProcessor.processResponse(response.getStatusLine(), content);
-                    return SessionToken.parseJson(json);
-                }
-            } finally {
-                connManager.close();
-            }
-        } catch (Exception e) {
-            throw new IllegalStateException("Cannot log in", e);
-        }
-    }
-
-    private static SSLConnectionSocketFactory socketFactory(File certFile, String certPassword) throws Exception {
-        SSLContext ctx = SSLContext.getInstance("TLS");
-        KeyStore keyStore = KeyStore.getInstance("pkcs12");
-        keyStore.load(new FileInputStream(certFile), certPassword.toCharArray());
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(keyStore, certPassword.toCharArray());
-        KeyManager[] keyManagers = kmf.getKeyManagers();
-        ctx.init(keyManagers, null, new SecureRandom());
-        return new SSLConnectionSocketFactory(ctx, new StrictHostnameVerifier());
     }
 
     private String processResponse(Processor processor, CloseableHttpClient httpClient, HttpUriRequest httpPost) throws IOException, ApiException {
@@ -437,11 +386,40 @@ public class HttpAccess {
         } catch (SocketTimeoutException e) {
             long time = (System.currentTimeMillis() - start);
             throw new TimeoutException("Socket timed out after ~" + time + "ms", e);
+        } catch (JsonIOException e) {
+            long time = (System.currentTimeMillis() - start);
+            throw new TimeoutException("Read timed out after ~" + time + "ms", e);
         }
     }
 
+    public static interface Auditor {
+        default void auditPostFailure(URI uri, String body, Exception whatWentWrong) {
+            System.out.println("[post " + uri + "]");
+            System.out.println("--> " + body);
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            whatWentWrong.printStackTrace(new PrintStream(out));
+            System.out.println("<-- " + new String(out.toByteArray()));
+        }
+
+        default void auditPost(URI uri, String body, String response) {
+            System.out.println("[post " + uri + "]");
+            System.out.println("--> " + body);
+            System.out.println("<-- " + response);
+        }
+
+        default void auditGet(URI uri, String response) {
+            System.out.println("[get " + uri + "]");
+            System.out.println("<-- " + response);
+        }
+    }
+
+    public interface Processor {
+        String process(StatusLine statusLine, InputStream in) throws IOException, ApiException;
+    }
+
     private static class TimeoutException extends IOException {
-        public TimeoutException(String message, IOException cause) {
+        public TimeoutException(String message, Exception cause) {
             super(message, cause);
         }
     }

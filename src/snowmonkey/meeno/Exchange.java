@@ -8,13 +8,13 @@ import java.util.Map;
 
 public enum Exchange {
     UK(
-            new Uris("https://api.betfair.com/exchange/account/json-rpc/v1", "https://api.betfair.com/exchange/account/rest/v1.0"),
-            new Uris("https://api.betfair.com/exchange/betting/json-rpc/v1", "https://api.betfair.com/exchange/betting/rest/v1.0")
+            new Uris("https://api.betfair.com/exchange/account/rest/v1.0"),
+            new Uris("https://api.betfair.com/exchange/betting/rest/v1.0")
     ),
 
     AUSTRALIA(
-            new Uris("https://api-au.betfair.com/exchange/account/json-rpc/v1", "https://api-au.betfair.com/exchange/account/rest/v1.0"),
-            new Uris("https://api-au.betfair.com/exchange/betting/json-rpc/v1", "https://api-au.betfair.com/exchange/betting/rest/v1.0")
+            new Uris("https://api-au.betfair.com/exchange/account/rest/v1.0"),
+            new Uris("https://api-au.betfair.com/exchange/betting/rest/v1.0")
     );
 
     public static final URI NAVIGATION = URI.create("https://api.betfair.com/exchange/betting/rest/v1/en/navigation/menu.json");
@@ -24,16 +24,6 @@ public enum Exchange {
 
     public static final ExchangeId DEFAULT_EXCHANGE_ID = new ExchangeId("1");
     public static final ExchangeId AUSTRALIAN_EXCHANGE_ID = new ExchangeId("2");
-
-    public static Exchange lookupByExchangeId(ExchangeId exchangeId) {
-        if (exchangeId.equals(DEFAULT_EXCHANGE_ID))
-            return UK;
-        else if (exchangeId.equals(AUSTRALIAN_EXCHANGE_ID))
-            return AUSTRALIA;
-        else
-            throw new IllegalStateException("Don't know about exchange id " + exchangeId);
-    }
-
     public final Exchange.Uris accountUris;
     public final Exchange.Uris bettingUris;
 
@@ -42,22 +32,13 @@ public enum Exchange {
         this.bettingUris = bettingUris;
     }
 
-    static class Uris {
-        private final String jsonRcpUrl;
-        private final String jsonRestUrl;
-
-        Uris(String jsonRcpUrl, String jsonRestUrl) {
-            this.jsonRcpUrl = jsonRcpUrl;
-            this.jsonRestUrl = jsonRestUrl;
-        }
-
-        public URI jsonRcpUri(MethodName method) {
-            return URI.create(jsonRcpUrl + "/" + method.pathPart + "/");
-        }
-
-        public URI jsonRestUri(MethodName method) {
-            return URI.create(jsonRestUrl + "/" + method.pathPart + "/");
-        }
+    public static Exchange lookupByExchangeId(ExchangeId exchangeId) {
+        if (exchangeId.equals(DEFAULT_EXCHANGE_ID))
+            return UK;
+        else if (exchangeId.equals(AUSTRALIAN_EXCHANGE_ID))
+            return AUSTRALIA;
+        else
+            throw new IllegalStateException("Don't know about exchange id " + exchangeId);
     }
 
     public static MethodName methodNameFrom(URI uri) {
@@ -97,5 +78,17 @@ public enum Exchange {
             this.pathPart = pathPart;
         }
 
+    }
+
+    static class Uris {
+        private final String jsonRestUrl;
+
+        Uris(String jsonRestUrl) {
+            this.jsonRestUrl = jsonRestUrl;
+        }
+
+        public URI jsonRestUri(MethodName method) {
+            return URI.create(jsonRestUrl + "/" + method.pathPart + "/");
+        }
     }
 }
