@@ -78,7 +78,6 @@
                     <include name="**/*Test.class"/>
                     <exclude name="live/**"/>
                     <exclude name="snowmonkey/meeno/HttpExchangeOperationsTest*"/>
-                    <exclude name="snowmonkey/meeno/JsonSerializationTest*"/>
                     <exclude name="snowmonkey/meeno/ListEventTypesTest*"/>
                     <exclude name="snowmonkey/meeno/SessionTokenTest*"/>
                     <exclude name="snowmonkey/meeno/types/FootballMarketTest*"/>

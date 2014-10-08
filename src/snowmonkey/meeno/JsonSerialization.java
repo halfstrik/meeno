@@ -1,50 +1,9 @@
 package snowmonkey.meeno;
 
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializer;
+import com.google.gson.*;
 import snowmonkey.meeno.requests.CancelInstruction;
-import snowmonkey.meeno.types.AccountStatementReport;
-import snowmonkey.meeno.types.BetId;
-import snowmonkey.meeno.types.CancelExecutionReport;
-import snowmonkey.meeno.types.CancelInstructionReport;
-import snowmonkey.meeno.types.ClearedOrderSummary;
-import snowmonkey.meeno.types.ClearedOrderSummaryReport;
-import snowmonkey.meeno.types.Competition;
-import snowmonkey.meeno.types.CurrentOrderSummary;
-import snowmonkey.meeno.types.CurrentOrderSummaryReport;
-import snowmonkey.meeno.types.CustomerRef;
-import snowmonkey.meeno.types.EventId;
-import snowmonkey.meeno.types.EventType;
-import snowmonkey.meeno.types.EventTypeId;
-import snowmonkey.meeno.types.ExchangeId;
-import snowmonkey.meeno.types.ExchangePrices;
-import snowmonkey.meeno.types.Handicap;
-import snowmonkey.meeno.types.Locale;
-import snowmonkey.meeno.types.MarketBook;
-import snowmonkey.meeno.types.MarketCatalogue;
-import snowmonkey.meeno.types.MarketId;
-import snowmonkey.meeno.types.Match;
-import snowmonkey.meeno.types.MatchId;
-import snowmonkey.meeno.types.MicroType;
-import snowmonkey.meeno.types.Order;
-import snowmonkey.meeno.types.PlaceExecutionReport;
-import snowmonkey.meeno.types.PlaceInstruction;
-import snowmonkey.meeno.types.PlaceInstructionReport;
-import snowmonkey.meeno.types.Price;
-import snowmonkey.meeno.types.PriceSize;
-import snowmonkey.meeno.types.Runner;
-import snowmonkey.meeno.types.RunnerCatalog;
-import snowmonkey.meeno.types.SelectionId;
-import snowmonkey.meeno.types.Size;
-import snowmonkey.meeno.types.StatementItem;
-import snowmonkey.meeno.types.StatementLegacyData;
+import snowmonkey.meeno.types.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
@@ -70,6 +29,7 @@ public class JsonSerialization {
 
                 .registerTypeAdapter(ExchangeId.class, (JsonSerializer<ExchangeId>) (src, typeOfSrc, context) -> src == null ? null : new JsonPrimitive(src.asString()))
                 .registerTypeAdapter(MarketId.class, (JsonSerializer<MarketId>) (src, typeOfSrc, context) -> src == null ? null : new JsonPrimitive(src.asString()))
+                .registerTypeAdapter(MarketId.class, (JsonDeserializer<MarketId>) (json, typeOfT, context) -> json == null ? null : new MarketId(json.getAsString()))
                 .registerTypeAdapter(BetId.class, (JsonSerializer<BetId>) (src, typeOfSrc, context) -> src == null ? null : new JsonPrimitive(src.asString()))
                 .registerTypeAdapter(MatchId.class, (JsonSerializer<MatchId>) (src, typeOfSrc, context) -> src == null ? null : new JsonPrimitive(src.asString()))
                 .registerTypeAdapter(EventId.class, (JsonSerializer<EventId>) (src, typeOfSrc, context) -> src == null ? null : new JsonPrimitive(src.asString()))
