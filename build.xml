@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="meeno" default="jar">
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="meeno" default="jar">
 
     <!-- Uncomment the following property if no tests compilation is needed -->
     <!--
@@ -11,13 +11,22 @@
     <property name="compiler.args" value="-parameters -encoding UTF-8 -source 8"/>
     <property name="compiler.max.memory" value="700m"/>
 
+    <property name="lib.folder" value="lib"/>
+    <property name="test.lib.folder" value="test-lib"/>
+
+    <target name="resolve">
+        <ivy:retrieve type="jar,bundle" conf="default" sync="true"/>
+        <ivy:retrieve pattern="${test.lib.folder}/[artifact]-[revision].[ext]" conf="test" type="jar,bundle"
+                      sync="true"/>
+    </target>
+
     <patternset id="library.patterns">
         <include name="*.jar"/>
     </patternset>
 
     <path id="library.runtime-lib.classpath">
-        <fileset dir="${basedir}/lib">
-            <patternset refid="library.patterns"/>
+        <fileset dir="${basedir}/${lib.folder}">
+        <patternset refid="library.patterns"/>
         </fileset>
     </path>
 
@@ -35,8 +44,8 @@
         </dirset>
     </path>
 
-    <target name="compile.sources">
-        <mkdir dir="${output.dir}"/>
+    <target name="compile.sources" depends="resolve">
+    <mkdir dir="${output.dir}"/>
         <javac destdir="${output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
                memorymaximumsize="${compiler.max.memory}" fork="true" includeantruntime="false">
             <compilerarg line="${compiler.args}"/>
@@ -46,8 +55,8 @@
     </target>
 
     <path id="library.test-lib.classpath">
-        <fileset dir="${basedir}/test-lib">
-            <patternset refid="library.patterns"/>
+        <fileset dir="${basedir}/${test.lib.folder}">
+        <patternset refid="library.patterns"/>
         </fileset>
     </path>
 
@@ -67,7 +76,7 @@
     </path>
 
     <target name="compile.tests" depends="compile.sources" unless="skip.tests">
-    <mkdir dir="${test.output.dir}"/>
+        <mkdir dir="${test.output.dir}"/>
         <javac destdir="${test.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
                memorymaximumsize="${compiler.max.memory}" fork="true" includeantruntime="false">
             <compilerarg line="${compiler.args}"/>
@@ -103,8 +112,8 @@
     </target>
 
     <target name="jar" depends="clean, run.tests">
-    <jar destfile="out/${ant.project.name}.jar">
-            <fileset dir="${output.dir}"/>
+        <jar destfile="out/${ant.project.name}.jar">
+        <fileset dir="${output.dir}"/>
             <fileset dir="${basedir}/src"/>
         </jar>
     </target>
