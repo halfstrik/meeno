@@ -69,8 +69,8 @@
         </javac>
     </target>
 
-    <target name="run.tests" depends="compile.tests">
-        <junit printsummary="no" fork="yes" haltonfailure="no" failureproperty="test.failed">
+    <target name="test" depends="compile.tests">
+    <junit printsummary="no" fork="yes" haltonfailure="no" failureproperty="test.failed">
             <classpath refid="tests.classpath"/>
             <formatter type="plain" usefile="false"/>
             <batchtest todir="${out.test.dir}">
@@ -82,8 +82,8 @@
         <fail message="Test failure detected, check test results." if="test.failed"/>
     </target>
 
-    <target name="jar" depends="clean, run.tests">
-        <jar destfile="out/${ant.project.name}.jar">
+    <target name="jar" depends="clean, compile.sources">
+    <jar destfile="out/${ant.project.name}.jar">
             <fileset dir="${out.production.dir}"/>
         </jar>
     </target>
