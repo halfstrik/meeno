@@ -4,13 +4,14 @@ import live.raw.GenerateTestData;
 import org.junit.Test;
 import snowmonkey.meeno.types.SessionToken;
 
-import static org.apache.commons.io.FileUtils.*;
+import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.junit.Assert.assertEquals;
 
 public class SessionTokenTest {
     @Test
     public void testParseJson() throws Exception {
         String json = readFileToString(GenerateTestData.LOGIN_FILE.toFile());
         SessionToken sessionToken = SessionToken.parseJson(json);
-        System.out.println("sessionToken = " + sessionToken);
+        assertEquals("arf/eWGaEy3hifh5erGaeT7c/sDjfDhR5IFJf01hGCa=", sessionToken.asString());
     }
 }

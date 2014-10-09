@@ -8,9 +8,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
-import java.util.UUID;
 
-import static org.apache.commons.io.FileUtils.*;
+import static org.apache.commons.io.FileUtils.readFileToString;
 
 public class GenerateTestData {
     public static final Path TEST_DATA_DIR = Paths.get("test-data/generated");
@@ -29,7 +28,7 @@ public class GenerateTestData {
     public static final Path PLACE_ORDERS_FILE = TEST_DATA_DIR.resolve("placeOrders.json");
     public static final Path LIST_MARKET_CATALOGUE_FILE = TEST_DATA_DIR.resolve("listMarketCatalogue.json");
     public static final String CANCEL_ORDERS_FILE = "cancelOrders.json";
-    public static final Path LOGIN_FILE = Paths.get("private").resolve(UUID.randomUUID() + ".login.json");
+    public static final Path LOGIN_FILE = TEST_DATA_DIR.resolve("login.json");
 
     public static HttpAccess.Processor fileWriter(final Path file) {
         return (statusLine, in) -> {
