@@ -5,3 +5,9 @@ out
 lib
 lib-src
 test-lib
+
+credentials.properties
+*.crt
+*.csr
+*.key
+*.p12
