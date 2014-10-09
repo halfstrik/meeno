@@ -1,4 +1,4 @@
-meeno
+meeno [![Build Status](https://travis-ci.org/halfstrik/meeno.svg?branch=master)](https://travis-ci.org/halfstrik/meeno)
 =====
 
 A strongly typed, immutable java-8 implementation of the Betfair NG-API for use in non-interactive (aka bot) applications.
