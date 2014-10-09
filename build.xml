@@ -14,6 +14,14 @@
         <delete dir="${out.dir}"/>
     </target>
 
+    <target name="ivy.install">
+        <property name="user.ant.lib" value="${user.home}/.ant/lib"/>
+        <property name="ivy.install.version" value="2.3.0"/>
+        <mkdir dir="${user.ant.lib}"/>
+        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar"
+             dest="${user.ant.lib}" usetimestamp="true"/>
+    </target>
+
     <property name="lib.dir" value="${basedir}/lib/production"/>
     <property name="lib.src.dir" value="${basedir}/lib/source"/>
     <property name="test.lib.dir" value="${basedir}/lib/test"/>
@@ -69,9 +77,9 @@
         </javac>
     </target>
 
-    <target name="test" depends="compile.tests">
-    <junit printsummary="no" fork="yes" haltonfailure="no" failureproperty="test.failed">
-            <classpath refid="tests.classpath"/>
+    <target name="test" depends="clean, compile.tests">
+        <junit printsummary="no" fork="yes" haltonfailure="no" failureproperty="test.failed">
+        <classpath refid="tests.classpath"/>
             <formatter type="plain" usefile="false"/>
             <batchtest todir="${out.test.dir}">
                 <fileset dir="${out.test.dir}">
@@ -83,8 +91,8 @@
     </target>
 
     <target name="jar" depends="clean, compile.sources">
-    <jar destfile="out/${ant.project.name}.jar">
-            <fileset dir="${out.production.dir}"/>
+        <jar destfile="out/${ant.project.name}.jar">
+        <fileset dir="${out.production.dir}"/>
         </jar>
     </target>
 

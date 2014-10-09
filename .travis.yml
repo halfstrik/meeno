@@ -1,4 +1,4 @@
 language: java
-
+install: ant ivy.install
 jdk:
   - oraclejdk8
