@@ -23,8 +23,8 @@
                     conf="sources->sources;default->default"/>
 
         <dependency org="junit" name="junit" rev="4.11" transitive="false"
-                    conf="test->default"/>
+                    conf="sources->sources;test->default"/>
         <dependency org="org.hamcrest" name="hamcrest-all" rev="1.3"
-                    conf="test->default"/>
+                    conf="sources->sources;test->default"/>
     </dependencies>
 </ivy-module>
