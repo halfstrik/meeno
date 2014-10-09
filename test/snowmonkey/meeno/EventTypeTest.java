@@ -1,16 +1,22 @@
 package snowmonkey.meeno;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 import snowmonkey.meeno.types.EventTypes;
 
-import static org.apache.commons.io.FileUtils.*;
+import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class EventTypeTest {
     @Test
     public void testRequestForPrices() throws Exception {
-        EventTypes eventTypes = EventTypes.parse(readFileToString(GenerateTestData.LIST_EVENT_TYPES_FILE.toFile()));
-
-        System.out.println(eventTypes.lookup("Soccer").prettyPrint());
+        EventTypes eventTypes = EventTypes.parse(readFileToString(TestData.unitTest().listEventTypesPath().toFile()));
+        assertThat(eventTypes.lookup("Soccer").prettyPrint(), equalTo("{\n" +
+                "  \"id\": {\n" +
+                "    \"value\": \"1\"\n" +
+                "  },\n" +
+                "  \"name\": \"Soccer\"\n" +
+                "}"));
     }
 }

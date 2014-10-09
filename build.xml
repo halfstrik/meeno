@@ -76,10 +76,6 @@
             <batchtest todir="${out.test.dir}">
                 <fileset dir="${out.test.dir}">
                     <include name="snowmonkey/**/*Test.class"/>
-                    <exclude name="snowmonkey/meeno/ListEventTypesTest*"/>
-                    <!--<exclude name="snowmonkey/meeno/SessionTokenTest*"/>-->
-                    <exclude name="snowmonkey/meeno/types/ListMarketCatalogueTest*"/>
-                    <exclude name="snowmonkey/meeno/types/NavigationTest*"/>
                 </fileset>
             </batchtest>
         </junit>

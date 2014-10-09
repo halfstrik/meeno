@@ -1,6 +1,6 @@
 package snowmonkey.meeno;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 import snowmonkey.meeno.types.SessionToken;
 
@@ -10,7 +10,7 @@ import static org.junit.Assert.assertEquals;
 public class SessionTokenTest {
     @Test
     public void testParseJson() throws Exception {
-        String json = readFileToString(GenerateTestData.LOGIN_FILE.toFile());
+        String json = readFileToString(TestData.unitTest().loginPath().toFile());
         SessionToken sessionToken = SessionToken.parseJson(json);
         assertEquals("arf/eWGaEy3hifh5erGaeT7c/sDjfDhR5IFJf01hGCa=", sessionToken.asString());
     }

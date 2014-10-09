@@ -8,18 +8,15 @@ import snowmonkey.meeno.DefaultProcessor;
 import snowmonkey.meeno.HttpExchangeOperations;
 import snowmonkey.meeno.requests.CancelInstruction;
 import snowmonkey.meeno.requests.CancelOrders;
-import snowmonkey.meeno.types.CancelExecutionReport;
-import snowmonkey.meeno.types.CurrentOrderSummary;
-import snowmonkey.meeno.types.CurrentOrderSummaryReport;
-import snowmonkey.meeno.types.MarketId;
-import snowmonkey.meeno.types.OrderProjection;
+import snowmonkey.meeno.types.*;
 
-import static java.time.ZonedDateTime.*;
-import static live.raw.GenerateTestData.*;
-import static org.apache.commons.io.FileUtils.*;
+import static helper.TestData.fileWriter;
+import static helper.TestData.generated;
+import static java.time.ZonedDateTime.now;
+import static org.apache.commons.io.FileUtils.readFileToString;
 import static snowmonkey.meeno.JsonSerialization.parse;
-import static snowmonkey.meeno.requests.ListCurrentOrders.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static snowmonkey.meeno.requests.ListCurrentOrders.Builder;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class CancelOrdersTest extends AbstractLiveTestCase {
     @Test
@@ -40,9 +37,10 @@ public class CancelOrdersTest extends AbstractLiveTestCase {
     @Test
     public void cancelAllOrders() throws Exception {
 
-        ukHttpAccess.listCurrentOrders(fileWriter(LIST_CURRENT_ORDERS_FILE), new Builder().build());
+        ukHttpAccess.listCurrentOrders(fileWriter(generated().listCurrentOrdersPath()), new Builder().build());
 
-        CurrentOrderSummaryReport currentOrders = parse(readFileToString(LIST_CURRENT_ORDERS_FILE.toFile()), CurrentOrderSummaryReport.class);
+        CurrentOrderSummaryReport currentOrders = parse(
+                readFileToString(generated().listCurrentOrdersPath().toFile()), CurrentOrderSummaryReport.class);
 
         Multimap<MarketId, CancelInstruction> cancelInstructions = ArrayListMultimap.create();
         for (CurrentOrderSummary currentOrder : currentOrders.currentOrders) {

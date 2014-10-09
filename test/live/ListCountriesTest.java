@@ -1,17 +1,17 @@
 package live;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 
-import static live.raw.GenerateTestData.*;
-import static org.apache.commons.io.FileUtils.*;
+import static helper.TestData.fileWriter;
+import static org.apache.commons.io.FileUtils.readFileToString;
 
 public class ListCountriesTest extends AbstractLiveTestCase {
     @Test
     public void test() throws Exception {
-        ukHttpAccess.listCountries(fileWriter(GenerateTestData.LIST_COUNTRIES_FILE));
+        ukHttpAccess.listCountries(fileWriter(TestData.generated().listCountriesPath()));
 
-        String s = readFileToString(GenerateTestData.LIST_COUNTRIES_FILE.toFile());
+        String s = readFileToString(TestData.generated().listCountriesPath().toFile());
 
         System.out.println(s);
     }

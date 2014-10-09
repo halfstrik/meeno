@@ -1,5 +1,6 @@
 package live;
 
+import helper.TestData;
 import org.junit.Test;
 import snowmonkey.meeno.types.EventId;
 import snowmonkey.meeno.types.EventTypeId;
@@ -8,11 +9,10 @@ import snowmonkey.meeno.types.Navigation;
 
 import java.time.ZonedDateTime;
 
-import static live.raw.GenerateTestData.*;
-import static snowmonkey.meeno.CountryLookup.*;
-import static snowmonkey.meeno.types.EventTypeName.*;
-import static snowmonkey.meeno.types.TimeGranularity.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static snowmonkey.meeno.CountryLookup.UnitedKingdom;
+import static snowmonkey.meeno.types.EventTypeName.SOCCER;
+import static snowmonkey.meeno.types.TimeGranularity.MINUTES;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class ListTimeRangesTest extends AbstractLiveTestCase {
     @Test
@@ -22,7 +22,7 @@ public class ListTimeRangesTest extends AbstractLiveTestCase {
         EventId eventId = navigation.eventId();
         EventTypeId eventTypeId = navigation.parent().eventTypeId();
 
-        ukHttpAccess.listTimeRanges(fileWriter(LIST_TIME_RANGES_FILE), MINUTES,
+        ukHttpAccess.listTimeRanges(TestData.fileWriter(TestData.generated().listTimeRangesPath()), MINUTES,
                 new MarketFilter.Builder()
                         .withEventTypeIds(eventTypeId)
                         .withEventIds(eventId)

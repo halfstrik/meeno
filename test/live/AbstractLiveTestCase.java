@@ -1,13 +1,9 @@
 package live;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import snowmonkey.meeno.ApiException;
-import snowmonkey.meeno.Exchange;
-import snowmonkey.meeno.HttpAccess;
-import snowmonkey.meeno.HttpExchangeOperations;
-import snowmonkey.meeno.MeenoConfig;
+import snowmonkey.meeno.*;
 import snowmonkey.meeno.types.Navigation;
 import snowmonkey.meeno.types.SessionToken;
 
@@ -16,8 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 
-import static live.raw.GenerateTestData.GetNavigation.*;
-import static live.raw.GenerateTestData.*;
+import static helper.TestData.fileWriter;
+import static helper.TestData.generated;
 
 public abstract class AbstractLiveTestCase {
     protected static HttpAccess ukHttpAccess;
@@ -46,12 +42,12 @@ public abstract class AbstractLiveTestCase {
     protected Navigation navigation() throws IOException, ApiException {
         LocalDate now = LocalDate.now();
 
-        Path path = navigationFile(now);
+        Path path = generated().navigationPath(now);
 
         if (!Files.exists(path)) {
-            ukHttpAccess.nav(fileWriter(navigationFile(now)));
+            ukHttpAccess.nav(fileWriter(generated().navigationPath(now)));
         }
 
-        return Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson(now));
+        return Navigation.parse(TestData.generated().navigationJson(now));
     }
 }

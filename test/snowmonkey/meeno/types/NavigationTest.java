@@ -1,12 +1,10 @@
 package snowmonkey.meeno.types;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
+import java.time.*;
 import java.util.List;
-import java.util.Set;
 
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertThat;
@@ -15,71 +13,54 @@ import static snowmonkey.meeno.types.TimeRange.between;
 
 public class NavigationTest {
     @Test
-    public void canGetEventTypes() throws Exception {
-        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
+    public void getEventTypes_withProperDataFromFile() throws Exception {
+        Navigation navigation = Navigation.parse(TestData.unitTest().navigationJson());
 
         List<Navigation> eventTypes = navigation.getEventTypes();
-        for (Navigation eventType : eventTypes) {
-            System.out.println("public static final EventTypeName " + eventType.eventTypeName().betfairName().toUpperCase().replaceAll("\\W", "_") + " = new EventTypeName(\"" + eventType.eventTypeName().betfairName() + "\");");
-        }
-        assertThat(eventTypes.size(), equalTo(29));
+        assertThat(eventTypes.size(), equalTo(31));
     }
 
     @Test
-    public void canGetSoccerEvents() throws Exception {
-        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
+    public void events_withSoccerAndProperDataFromFile() throws Exception {
+        Navigation navigation = Navigation.parse(TestData.unitTest().navigationJson());
 
         List<Navigation> eventTypes = navigation.events(SOCCER);
-        for (Navigation eventType : eventTypes) {
-            System.out.println(eventType);
-            List<Navigation> children = eventType.children();
-            for (Navigation child : children) {
-                System.out.println("\t" + child);
-                List<Navigation.Market> markets = child.markets();
-                for (Navigation.Market market : markets) {
-                    System.out.println("\t\t" + market);
-                }
-            }
-        }
+        assertThat(eventTypes.size(), equalTo(79));
     }
 
     @Test
-    public void testFind() throws Exception {
-        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
+    public void findMarkets_withSoccerCorrectScoreProperDataFromFile() throws Exception {
+        Navigation navigation = Navigation.parse(TestData.unitTest().navigationJson());
 
-        Set<String> names = new HashSet<>();
         Navigation.Markets markets = navigation.findMarkets(
                 SOCCER,
-                between(ZonedDateTime.now(), ZonedDateTime.now().plusDays(20)),
+                between(ZonedDateTime.of(LocalDate.of(2014, Month.OCTOBER, 9), LocalTime.NOON, ZoneId.of("GMT")),
+                        ZonedDateTime.of(LocalDate.of(2014, Month.OCTOBER, 11), LocalTime.NOON, ZoneId.of("GMT"))),
                 "Correct Score.*"
         );
-
-        for (Navigation.Market market : markets) {
-            names.add(market.name);
-            System.out.println(market.printHierarchy());
+        int size = 0;
+        for (Navigation.Market ignored : markets) {
+            size += 1;
         }
-
-        for (String name : names) {
-            System.out.println("name = " + name);
-        }
+        assertThat(size, equalTo(399));
     }
 
     @Test
-    public void testSiblings() throws Exception {
-        Navigation navigation = Navigation.parse(GenerateTestData.GetNavigation.getNavigationJson());
+    public void findSiblingMarkets_withProperDataFromFile() throws Exception {
+        Navigation navigation = Navigation.parse(TestData.unitTest().navigationJson());
         Navigation.Markets markets = navigation.findMarkets(
                 SOCCER,
-                between(ZonedDateTime.now().minusDays(10), ZonedDateTime.now().plusDays(20)),
+                between(ZonedDateTime.of(LocalDate.of(2014, Month.OCTOBER, 9), LocalTime.NOON, ZoneId.of("GMT")),
+                        ZonedDateTime.of(LocalDate.of(2014, Month.OCTOBER, 11), LocalTime.NOON, ZoneId.of("GMT"))),
                 "Match Odds"
         );
-        Navigation.Market market = markets.get(new MarketId("1.115333855"));
-        System.out.println(market);
-        Navigation group = market.group();
-        System.out.println(group);
-        Navigation.Markets siblingMarkets = market.findSiblingMarkets("Correct Score.*");
-        for (Navigation.Market siblingMarket : siblingMarkets) {
-            System.out.println(siblingMarket.printHierarchy());
-        }
+        Navigation.Market market = markets.get(new MarketId("1.115732425"));
 
+        Navigation.Markets siblingMarkets = market.findSiblingMarkets("Correct Score.*");
+        int size = 0;
+        for (Navigation.Market ignored : siblingMarkets) {
+            size += 1;
+        }
+        assertThat(size, equalTo(3));
     }
 }

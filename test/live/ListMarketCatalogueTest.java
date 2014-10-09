@@ -3,36 +3,29 @@ package live;
 import com.google.common.collect.Iterables;
 import org.junit.Test;
 import snowmonkey.meeno.NotFoundException;
-import snowmonkey.meeno.types.EventTypeId;
-import snowmonkey.meeno.types.EventTypeName;
-import snowmonkey.meeno.types.EventTypes;
-import snowmonkey.meeno.types.MarketCatalogue;
-import snowmonkey.meeno.types.MarketCatalogues;
-import snowmonkey.meeno.types.MarketFilter;
-import snowmonkey.meeno.types.MarketId;
-import snowmonkey.meeno.types.MarketSort;
-import snowmonkey.meeno.types.Navigation;
+import snowmonkey.meeno.types.*;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static com.google.common.collect.Sets.*;
-import static java.time.ZonedDateTime.*;
-import static live.raw.GenerateTestData.*;
-import static org.apache.commons.io.FileUtils.*;
+import static com.google.common.collect.Sets.newHashSet;
+import static helper.TestData.fileWriter;
+import static helper.TestData.generated;
+import static java.time.ZonedDateTime.now;
+import static org.apache.commons.io.FileUtils.readFileToString;
 import static snowmonkey.meeno.JsonSerialization.parse;
 import static snowmonkey.meeno.types.MarketProjection.*;
-import static snowmonkey.meeno.types.TimeRange.*;
+import static snowmonkey.meeno.types.TimeRange.between;
 
 public class ListMarketCatalogueTest extends AbstractLiveTestCase {
 
     @Test(expected = NotFoundException.class)
     public void willBlowUpIfMarketHasExpired() throws Exception {
-        EventTypes eventTypes = EventTypes.parse(readFileToString(LIST_EVENT_TYPES_FILE.toFile()));
+        EventTypes eventTypes = EventTypes.parse(readFileToString(generated().listEventTypesPath().toFile()));
 
         EventTypeId soccer = eventTypes.lookup("Soccer").id;
 
-        ukHttpAccess.listMarketCatalogue(fileWriter(LIST_MARKET_CATALOGUE_FILE),
+        ukHttpAccess.listMarketCatalogue(fileWriter(generated().listMarketCataloguePath()),
                 newHashSet(MARKET_START_TIME, RUNNER_METADATA, MARKET_DESCRIPTION),
                 MarketSort.FIRST_TO_START,
                 new MarketFilter.Builder()
@@ -47,7 +40,7 @@ public class ListMarketCatalogueTest extends AbstractLiveTestCase {
 
         int maxResults = 50;
 
-        EventTypes eventTypes = EventTypes.parse(readFileToString(LIST_EVENT_TYPES_FILE.toFile()));
+        EventTypes eventTypes = EventTypes.parse(readFileToString(generated().listEventTypesPath().toFile()));
 
         EventTypeId soccer = eventTypes.lookup("Soccer").id;
 
@@ -64,7 +57,7 @@ public class ListMarketCatalogueTest extends AbstractLiveTestCase {
 
         for (List<MarketId> marketIds : Iterables.partition(markets.marketsIds(), maxResults)) {
 
-            ukHttpAccess.listMarketCatalogue(fileWriter(LIST_MARKET_CATALOGUE_FILE),
+            ukHttpAccess.listMarketCatalogue(fileWriter(generated().listMarketCataloguePath()),
                     newHashSet(MARKET_START_TIME, RUNNER_METADATA, MARKET_DESCRIPTION),
                     MarketSort.FIRST_TO_START,
                     new MarketFilter.Builder()
@@ -72,7 +65,7 @@ public class ListMarketCatalogueTest extends AbstractLiveTestCase {
                             .withMarketIds(marketIds)
                             .build());
 
-            MarketCatalogues marketCatalogues = MarketCatalogues.createMarketCatalogues(parse(readFileToString(LIST_MARKET_CATALOGUE_FILE.toFile()), MarketCatalogue[].class));
+            MarketCatalogues marketCatalogues = MarketCatalogues.createMarketCatalogues(parse(readFileToString(generated().listMarketCataloguePath().toFile()), MarketCatalogue[].class));
 
             for (MarketId marketId : marketIds) {
                 if (marketCatalogues.has(marketId)) {

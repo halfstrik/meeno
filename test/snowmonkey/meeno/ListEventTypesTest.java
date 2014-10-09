@@ -1,27 +1,27 @@
 package snowmonkey.meeno;
 
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 import snowmonkey.meeno.types.EventType;
 import snowmonkey.meeno.types.EventTypes;
 
-import static org.apache.commons.io.FileUtils.*;
-import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.*;
+import static org.apache.commons.io.FileUtils.readFileToString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 public class ListEventTypesTest {
     @Test
     public void canParse() throws Exception {
-        EventTypes eventTypes = EventTypes.parse(readFileToString(GenerateTestData.LIST_EVENT_TYPES_FILE.toFile()));
+        EventTypes eventTypes = EventTypes.parse(readFileToString(TestData.unitTest().listEventTypesPath().toFile()));
 
         EventType soccer = eventTypes.lookup("Soccer");
 
-        assertThat(soccer.id, equalTo("1"));
+        assertThat(soccer.id.asString(), equalTo("1"));
         assertThat(soccer.name, equalTo("Soccer"));
 
         EventType horseRacing = eventTypes.lookup("Horse Racing");
 
-        assertThat(horseRacing.id, equalTo("7"));
+        assertThat(horseRacing.id.asString(), equalTo("7"));
         assertThat(horseRacing.name, equalTo("Horse Racing"));
     }
 }

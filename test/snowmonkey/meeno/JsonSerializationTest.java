@@ -2,7 +2,7 @@ package snowmonkey.meeno;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import live.raw.GenerateTestData;
+import helper.TestData;
 import org.junit.Test;
 import snowmonkey.meeno.requests.ListMarketBook;
 import snowmonkey.meeno.types.*;
@@ -73,7 +73,7 @@ public class JsonSerializationTest {
     @Test
     public void gsonFromJson_withComplexObject() throws Exception {
         JsonElement jsonElement = new JsonParser().parse(readFileToString(
-                GenerateTestData.LIST_CLEARED_ORDERS_FILE.toFile())).getAsJsonObject().get("clearedOrders");
+                TestData.unitTest().listClearedOrdersPath().toFile())).getAsJsonObject().get("clearedOrders");
         ClearedOrderSummaryReport[] clearedOrderSummaryReport = gson().fromJson(
                 jsonElement, (Type) ClearedOrderSummaryReport[].class);
 
@@ -83,7 +83,7 @@ public class JsonSerializationTest {
     @Test
     public void parse_canDeserializeStructuredComplexObjects() throws Exception {
         CurrentOrderSummaryReport currentOrders = JsonSerialization.parse(
-                readFileToString(GenerateTestData.LIST_CURRENT_ORDERS_FILE.toFile()), CurrentOrderSummaryReport.class);
+                readFileToString(TestData.unitTest().listCurrentOrdersPath().toFile()), CurrentOrderSummaryReport.class);
         CurrentOrderSummary order = currentOrders.currentOrders.iterator().next();
 
         assertThat(order.betId, equalTo(new BetId("41475324467")));
